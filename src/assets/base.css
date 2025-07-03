@@ -1,0 +1,27 @@
+:root {
+  /* --calendar-bg:linear-gradient(135.44deg, #FDFDFF 0%, #F6F7FF 99.24%); */
+  --calendar-bg: #FFFFFF;
+  --calendar-border-color: #E0E0E0;
+  --calendar-shadow: rgba(0, 0, 0, 0.1);
+  --color-dark: #000000;
+  --day-names-color: #6c757d;
+  --day-number-color: #343a40;
+  --today-background: #744AFF;
+  --today-text: #FFFFFF;
+  --inactive-day-color: #ced4da;
+  --icon-color: #000000;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #F4F3FF;
+}
+#app{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: var(--day-number-color);
+}
