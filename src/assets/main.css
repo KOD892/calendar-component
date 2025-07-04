@@ -1,1 +1,31 @@
 @import url('./base.css');
+
+.popup {
+    position: absolute;
+    background-color: var(--calendar-bg);
+    border: 1px solid var(--calendar-border-color);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px var(--calendar-shadow);
+    padding: 1rem;
+    z-index: 1000; /* Ensure it's on top */
+    width: 200px; /* Adjust as needed */
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-content input[type="text"] {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.popup-content button {
+    padding: 0.5rem 1rem;
+    background-color: var(--today-background);
+    color: white;
+    cursor: pointer;
+}

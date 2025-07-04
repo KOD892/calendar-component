@@ -1,35 +1,142 @@
 <script setup>
+import { onMounted, ref, useTemplateRef } from 'vue';
 
-  // Optional: A small piece of JS to set the current date dynamically
-        // For a full calendar, this would be much more complex.
-        document.addEventListener('DOMContentLoaded', () => {
-            const date = new Date();
-            const options = { year: 'numeric', month: 'long' };
-            const currentMonthYear = date.toLocaleDateString('en-US', options);
-            document.querySelector('.current-month-year').textContent = currentMonthYear;
+const currentMonthYear = ref("")
 
-            // Mark today's date dynamically (only if it's the current month/year)
-            const today = date.getDate();
-            const daysContainer = document.querySelector('.days');
-            Array.from(daysContainer.children).forEach(dayElement => {
-                if (!dayElement.classList.contains('inactive') && parseInt(dayElement.textContent) === today) {
-                    // Remove existing 'today' class if any (e.g., from static HTML)
-                    document.querySelectorAll('.days .today').forEach(el => el.classList.remove('today'));
-                    dayElement.classList.add('today');
-                }
-            });
-        });
+const days_grid = useTemplateRef("daysGrid");
+const popup = useTemplateRef("popup");
+const showPopup = ref(false);
+
+
+//to be changed
+const prevMonthBtn = document.getElementById('prevMonth');
+const nextMonthBtn = document.getElementById('nextMonth');
+let     currentDate = new Date(); // Stores the currently displayed month/year
+
+
+const renderCalendar = () => {
+    // Clear previous days
+    days_grid.value.innerHTML = '';
+
+    // Get current month and year from the `currentDate` object
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    // Set the month and year display in the header
+    currentMonthYear.value = currentDate.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+    });
+
+    // Get the first day of the current month (e.g., July 1, 2025)
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    // Get the day of the week for the first day (0 for Sunday, 1 for Monday, etc.)
+    const startDayOfWeek = firstDayOfMonth.getDay(); 
+
+    // Get the last day of the current month (e.g., July 31, 2025)
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+    // Get the number of days in the current month
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    // Get the last day of the previous month
+    const lastDayOfPrevMonth = new Date(currentYear, currentMonth, 0);
+    const daysInPrevMonth = lastDayOfPrevMonth.getDate();
+
+    // Get today's actual date (to highlight)
+    const today = new Date();
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    // 1. Add inactive days from the end of the previous month
+    // `startDayOfWeek` tells us how many empty cells (or prev month days) we need
+    for (let i = startDayOfWeek; i > 0; i--) {
+        const dayDiv = document.createElement('div');
+        dayDiv.classList.add('inactive');
+        dayDiv.textContent = daysInPrevMonth - i + 1;
+        days_grid.value.appendChild(dayDiv);
+    }
+
+    // 2. Add days of the current month
+    for (let i = 1; i <= daysInMonth; i++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.classList.add('day');
+        dayDiv.id = `${currentYear}:${currentMonth}:${i}`;
+        dayDiv.textContent = i;
+
+        // Check if this day is today's date
+        if (
+            i === todayDay &&
+            currentMonth === todayMonth &&
+            currentYear === todayYear
+        ) {
+            dayDiv.classList.add('today');
+        }
+        days_grid.value.appendChild(dayDiv);
+    }
+
+    // 3. Add inactive days from the start of the next month
+    // We need a total of 42 cells (6 rows * 7 days) to ensure consistent calendar layout
+    // Or simply fill until a new row starts
+    const totalCells = days_grid.value.children.length;
+    const remainingCells = 42 - totalCells; // Max 6 rows * 7 days = 42 cells
+                                           // Min 5 rows * 7 days = 35 cells
+    const daysToAdd = remainingCells < 7 ? (7 - (totalCells % 7)) % 7 : remainingCells;
+
+
+    for (let i = 1; i <= daysToAdd; i++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.classList.add('inactive');
+        dayDiv.textContent = i;
+        days_grid.value.appendChild(dayDiv);
+    }
+};
+
+const prevMonth = () => {
+    currentDate.setMonth(currentDate.getMonth() - 1); // Go to previous month
+    renderCalendar();
+}
+
+const nextMonth = () => {
+    currentDate.setMonth(currentDate.getMonth() + 1); // Go to next month
+    renderCalendar();
+}
+
+const id = ref(null);
+const setEvent=(e)=>{
+    if(e.target.classList.contains('day')){
+        id.value = e.target.id;
+       renderPopup(e.pageX,e.pageY);
+       console.log(e)
+    }
+}
+
+const renderPopup=(x,y)=>{ 
+    console.log(popup.value)
+    popup.value.style.left = `${x}px`;
+    popup.value.style.top = `${y}px`;
+    showPopup.value = true;
+   
+}
+
+
+onMounted(()=>{
+   renderCalendar();        
+})
+
+       
 
 </script>
+
 <template>
      <div class="calendar-container">
         <div class="calendar-header">
             <div class="current-month-year bold">
-                July 2025
+                {{ currentMonthYear }}
             </div>
             <div class="calendar-controls bold">
-            <span class="nav-icon material-symbols-outlined">chevron_left</span>
-            <span class="nav-icon material-symbols-outlined">chevron_right</span>
+            <span @click="prevMonth" class="nav-icon material-symbols-outlined">chevron_left</span>
+            <span @click="nextMonth" class="nav-icon material-symbols-outlined">chevron_right</span>
         </div>
         </div>
 
@@ -43,52 +150,21 @@
                 <div>Fri</div>
                 <div>Sat</div>
             </div>
-            <div class="days">
-                <div class="inactive">29</div>
-                <div class="inactive">30</div>
-
-                <div>1</div>
-                <div class="today">2</div> <div>3</div>
-                <div>4</div>
-                <div>5</div>
-                <div>6</div>
-                <div>7</div>
-                <div>8</div>
-                <div>9</div>
-                <div>10</div>
-                <div>11</div>
-                <div>12</div>
-                <div>13</div>
-                <div>14</div>
-                <div>15</div>
-                <div>16</div>
-                <div>17</div>
-                <div>18</div>
-                <div>19</div>
-                <div>20</div>
-                <div>21</div>
-                <div>22</div>
-                <div>23</div>
-                <div>24</div>
-                <div>25</div>
-                <div>26</div>
-                <div>27</div>
-                <div>28</div>
-                <div>29</div>
-                <div>30</div>
-                <div>31</div>
-
-                <div class="inactive">1</div>
-                <div class="inactive">2</div>
-                <div class="inactive">3</div>
-                <div class="inactive">4</div>
-                <div class="inactive">5</div>
-                <div class="inactive">6</div>
+            <div @click="setEvent($event)" class="days" ref="daysGrid">
+                
             </div>
+        </div>
+    </div>
+    <div v-show="showPopup" ref="popup" class="popup">
+        <div class="popup-content">
+            <div class="date" style="padding-bottom: 8px;" ><span>{{ id }}</span> <span @click="showPopup=false" style="float: inline-end; color: red; cursor:pointer">X</span> </div>
+            <input type="text" placeholder="Event">
+            <button>Add Event</button>
         </div>
     </div>
 
 </template>
+
 <style>
         /*
          * CSS for the Centered Calendar
@@ -109,6 +185,7 @@
             color: var(--color-dark) !important;
             padding: 15px 20px;
             display: flex;
+            font-size: 1.5rem;
             justify-content: space-between;
             align-items: center;
             text-transform: capitalize; /* For month name */
@@ -116,12 +193,18 @@
 
         .calendar-header .nav-icon {
             font-family: 'Material Symbols Outlined';
-            font-size: 24px;
+            font-size: 1.5rem;
+            font-weight: 400;
             cursor: pointer;
             user-select: none;
             color: var(--icon-color);
         }
-
+        .calendar-controls {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+            gap: .5rem;
+        }
         .calendar-grid {
             padding: 20px;
         }
@@ -166,7 +249,7 @@
         }
 
         .days div:not(.inactive):hover {
-            background-color: rgba(0, 123, 255, 0.1); /* Light blue hover */
+            background-color: rgba(116, 74, 255, 0.411);
             color: var(--header-bg);
         }
         
